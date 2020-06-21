@@ -163,6 +163,8 @@ app.post("/submitrequest",function(req,res)
     console.log('Connection is okay');
   
     const db = database.db('egatepass');
+
+    
   
     getTutorForStudent(db,req.body.requester,(tutorname)=>
     {
@@ -171,14 +173,14 @@ app.post("/submitrequest",function(req,res)
       newSubmitRequest.request_approver =tutorname;
       console.log("New submit question "+newSubmitRequest);
       
-    }).then(insertDocuments(db,newSubmitRequest, () => {
+    });
+    
+    insertDocuments(db,newSubmitRequest, () => {
       console.log('Insert successful');
-    }));
-    
-    
+    })
   });
 
-  const getTutorForStudent = (db,requester,callback) =>
+  async const getTutorForStudent = (db,requester,callback) =>
   {
     const collection  = db.collection('students');
     var tutorStrId = undefined;
@@ -228,4 +230,9 @@ app.post("/submitrequest",function(req,res)
   };
 
 
+})
+
+app.post("/requestpass",function(req,res)
+{
+  
 })
