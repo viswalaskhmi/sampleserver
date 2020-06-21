@@ -155,24 +155,27 @@ app.post("/mymsg/:from/:message/:ts",function(req,res)
 
 app.post("/submitrequest",function(req,res)
 {
-  console.log(req.body);
-  const newSubmitRequest = JSON.stringify(req.body);
+  var tutorname;
+  const newSubmitRequest = req.body;
 
-  console.log("Requester:::" +req.body.requester);
-  console.log(newSubmitRequest);
   MongoClient.connect(url, (error, database) => {
     if (error) return process.exit(1);
     console.log('Connection is okay');
   
     const db = database.db('egatepass');
   
-    getTutorForStudent(db,req.body.requester,()=>
+    getTutorForStudent(db,req.body.requester,(tutorname)=>
     {
       console.log("Finding tutor for student is succesful");
-    });
-    /*insertDocuments(db, () => {
+      console.log("tutor name returned from the sub function  "+tutorname);
+      newSubmitRequest.request_approver =tutorname;
+      console.log("New submit question "+newSubmitRequest);
+      
+    }).then(insertDocuments(db,newSubmitRequest, () => {
       console.log('Insert successful');
-    });*/
+    }));
+    
+    
   });
 
   const getTutorForStudent = (db,requester,callback) =>
@@ -180,6 +183,8 @@ app.post("/submitrequest",function(req,res)
     const collection  = db.collection('students');
     var tutorStrId = undefined;
     var tutorObjId = undefined;
+
+    var tutorName = undefined;
     collection.find({"name":requester}).toArray(
       function(err, doc) 
       {
@@ -187,28 +192,34 @@ app.post("/submitrequest",function(req,res)
         if(doc!==null && doc.length>0)
         {
           
-          tutorStrId = JSON.parse(JSON.stringify(doc[0].tutor));
-          console.log("Tutor object id "+tutorStrId);
+          //tutorStrId = JSON.parse(JSON.stringify(doc[0].tutor));
+          //console.log("Tutor object id "+tutorStrId);
           //tutorObjId =new mongodb.ObjectID(tutorStrId);
           //console.log("Tutor object id ----->"+tutorObjId);
-          tutorObjId = BSON.ObjectID.createFromHexString(tutorStrId);
-          console.log("Tutor object id ----->"+tutorObjId);
+          //tutorObjId = BSON.ObjectID.createFromHexString(tutorStrId);
+          console.log("Tutor name----->"+doc[0].tutor);
+          tutorName = doc[0].tutor;
+          callback(tutorName);
         }
       });
-
-      const collection2 = db.collection('tutors');
-      collection2.find({"_id":new mongodb.ObjectID(tutorObjId)}).toArray(function(err,doc)
+      
+      /*const collection2 = db.collection('tutors');
+      collection2.find({name:tutorName}).toArray(function(err,doc)
       {
         console.log(doc);
-      })
+      })*/
   }
   
-  const insertDocuments = (db, callback) => {
+  const insertDocuments = (db,request,callback) => {
     const collection = db.collection('gatepassrequests');
-  
-    collection.insert(
-  
-      req.body,
+   console.log("INSIDE INSERTION");
+   console.log(request);
+   //body.request_approver ="HELLO";
+   //console.log("------------------------------");
+   //console.log(req.body);
+   //console.log("------------------------------");
+   collection.insert(
+       request,
       (error, result) => {
         if (error) return process.exit(1);
         callback(result);
